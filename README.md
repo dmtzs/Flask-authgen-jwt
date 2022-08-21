@@ -1,0 +1,2 @@
+# Flask-authgen-jwt
+A flask library in which uses pyjwt to encode and decode JWTs but with the improvements in which you can define user roles to the endpoints so its better to use this library with that extra level of security. Also you can generate a JWT using basic authentication first to retrieve a token with the respective personalizations and then keep using that token. All options of pywjt to generate a token are going to be available.
