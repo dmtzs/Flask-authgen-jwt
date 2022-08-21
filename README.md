@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="300" src="" alt="Cover image">
+  <!-- <img width="300" src="" alt="Cover image"> -->
   <h1 align="center" style="margin: 0 auto 0 auto;">Flask-authgen-jwt</h1>
   <h5 align="center" style="margin: 0 auto 0 auto;">A flask library to generate JWT and authenticate using JWT</h5>
 </p>
