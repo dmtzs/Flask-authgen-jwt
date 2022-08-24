@@ -58,4 +58,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        pylint $(git ls-files './API*.py') --rcfile=.github/config/.pylintrc ./
+        pylint $(git ls-files './src*.py') --rcfile=.github/config/.pylintrc ./
