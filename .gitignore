@@ -1,3 +1,6 @@
+# Personal files to ignore
+readFileAsBinary/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
