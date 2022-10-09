@@ -12,26 +12,11 @@ try:
     import jwt
     from functools import wraps
     from base64 import b64decode
-    from flask import request, current_app, abort, make_response, Response
+    from flask import request, current_app, abort, make_response, jsonify
 except ImportError as eImp:
     print(f"The following import ERROR occurred in {__file__}: {eImp}")
 
 class Core():
-    auth_error_callback = None# TODO: This is relationated with the error handler, I will use this later
-
-    def error_handler(self, func):
-        @wraps(func)
-        def decorated(*args, **kwargs):
-            res = self.ensure_sync(func)(*args, **kwargs)
-            check_status_code = not isinstance(res, (tuple, Response))
-            res = make_response(res)
-            if check_status_code and res.status_code == 200:
-                # if user didn't set status code, use 401
-                res.status_code = 401
-            return res
-        self.auth_error_callback = decorated
-        return decorated
-    
     def ensure_sync(self, func):
         try:
             return current_app.ensure_sync(func)
@@ -61,7 +46,7 @@ class DecJwt(Core):
         claims = ["key", "algorithm"]
         for claim in claims:
             if claim not in self.decode_jwt_callback:
-                abort(400, f"The claim {claim} is not in the dictionary")
+                abort(make_response(jsonify({"error": f"The claim {claim} is not in the dictionary"}), 400))
     
     def __decode_jwt(self):
         auth_header = request.headers.get("Authorization")
@@ -84,15 +69,15 @@ class DecJwt(Core):
         By default the method verify if there is at least one claim inside jwt, if not then invalid token error will appear.
         :param token: token to verify"""
         if token is None:
-            abort(401, "Invalid token")
+            abort(make_response(jsonify({"error": "Invalid token"}), 401))
         else:
             if self.get_jwt_claims_to_verify_callback is not None:
                 claims = self.get_jwt_claims_to_verify_callback
                 for claim in claims:
                     if claim not in token:
-                        abort(401, f"The claim {claim} is not in the token")
+                        abort(make_response(jsonify({"error": f"The claim {claim} is not in the token"}), 400))
             if len(token) < 1:
-                abort(401, "Invalid token")
+                abort(make_response(jsonify({"error": "Invalid token"}), 401))
 
     def get_user_roles(self, func):
         """Decorator to get the user roles
@@ -117,18 +102,18 @@ class DecJwt(Core):
             @wraps(func)
             def wrapper(*args, **kwargs):
                 if self.decode_jwt_callback is None:
-                    return abort(500, "The function to verify password and username is not set")
+                    abort(make_response(jsonify({"error": "get_decode_jwt_attributes decorator and function to verify password and username is not set"}), 500))
                 else:
                     token = self.__decode_jwt()
                     self.__verify_token(token)
 
                 if roles is not None:
                     if self.get_user_roles_callback is None:
-                        return abort(500, "get_user_roles decorator and function is not defined is not defined")
+                        abort(make_response(jsonify({"error": "get_user_roles decorator and function is not defined is not defined"}), 500))
                     else:
                         user_roles = self.get_user_roles_callback
                         if not set(roles).issubset(set(user_roles)):
-                            return abort(401, "User is not authorized to access this resource")
+                            abort(make_response(jsonify({"error": "User is not authorized to access this resource"}), 401))
                 return self.ensure_sync(func)(*args, **kwargs)
             return wrapper
         if func:
