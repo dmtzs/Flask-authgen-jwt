@@ -17,8 +17,8 @@ except ImportError as eImp:
     print(f"The following import ERROR occurred in {__file__}: {eImp}")
 
 class Core():
-    auth_error_callback = None
-    
+    auth_error_callback = None# TODO: This is relationated with the error handler, I will use this later
+
     def error_handler(self, func):
         @wraps(func)
         def decorated(*args, **kwargs):
