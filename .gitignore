@@ -1,3 +1,7 @@
+# Personal files to ignore
+readFileAsBinary/
+my_tests/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

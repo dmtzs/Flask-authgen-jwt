@@ -17,6 +17,7 @@
   <img alt="GitHub repo size" src="https://img.shields.io/github/repo-size/dmtzs/Flask-authgen-jwt">
   <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/dmtzs/Flask-authgen-jwt?label=total%20lines%20in%20repo">
   <img alt="GitHub language count" src="https://img.shields.io/github/languages/count/dmtzs/Flask-authgen-jwt">
+  <img alt="GitHub language count" src="https://github.com/dmtzs/Flask-authgen-jwt/actions/workflows/pylint.yml/badge.svg">
 </p>
 
 - [Documentation](#Documentation)
