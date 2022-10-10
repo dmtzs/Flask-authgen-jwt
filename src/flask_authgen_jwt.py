@@ -38,7 +38,7 @@ class Core():
         elif config == "basic_auth":
             claims = ["username", "password"]
             for claim in claims:
-                if claim not in self.basic_auth_callback:
+                if claim not in self.basic_auth_callback:# Initiated in GenJWT class
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
 
     def verify_user_roles(self, roles: list):
