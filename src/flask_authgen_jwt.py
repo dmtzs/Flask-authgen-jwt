@@ -10,6 +10,7 @@ This module provides creation of new jwt also using basic auth to get the jwt an
 
 try:
     import jwt
+    import typing
     from functools import wraps
     from base64 import b64decode
     from flask import request, current_app, abort, make_response, jsonify
@@ -20,7 +21,7 @@ class Core():
     enc_dec_jwt_callback: dict = None
     get_user_roles_callback: list = None
 
-    def enc_dec_jwt_config(self, func):
+    def enc_dec_jwt_config(self, func) -> typing.Callable:
         """Decorator to verify the JWT token
         :param f: function to be decorated
         :return: the function to wrap should return a dictionary with the following keys:
@@ -31,7 +32,7 @@ class Core():
 
     def verify_dict_config(self, config: str):
         if config == "jwt":
-            claims = ["key", "algorithm", "expiration"]
+            claims = ["key", "algorithm"]
             for claim in claims:
                 if claim not in self.enc_dec_jwt_callback:
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
@@ -56,7 +57,7 @@ class Core():
                 if not role_flag:
                     self.gen_abort_error("User does not have the required roles", 403)
     
-    def get_user_roles(self, func):
+    def get_user_roles(self, func) -> typing.Callable:
         """Decorator to get the user roles
         :param f: function to be decorated
         :return: user roles as a list"""
@@ -66,7 +67,7 @@ class Core():
     def gen_abort_error(self, error: str, status_code: int):
         abort(make_response(jsonify({"error": error}), status_code))
 
-    def ensure_sync(self, func):
+    def ensure_sync(self, func) -> typing.Callable:
         try:
             return current_app.ensure_sync(func)
         except AttributeError:
@@ -74,14 +75,14 @@ class Core():
 
 class GenJwt(Core):
     def __init__(self):
-        self.jwt_extra_fields: dict = None
+        self.jwt_fields_attr: dict = None
         self.basic_auth_callback: dict = None
 
-    def __create_jwt_payload(self):
+    def __create_jwt_payload(self) -> dict:
         payload = self.basic_auth_callback
         payload["expiration"] = self.enc_dec_jwt_callback["expiration"]
-        if self.jwt_extra_fields:
-            payload.update(self.jwt_extra_fields)
+        if self.jwt_fields_attr:
+            payload.update(self.jwt_fields_attr)
         return payload
     
     def __verify_basic_auth(self):
@@ -100,7 +101,7 @@ class GenJwt(Core):
         if credentials[0] != username or credentials[1] != password:
             self.gen_abort_error("User or password is not correct", 401)
     
-    def __encode_jwt(self, payload):
+    def __encode_jwt(self, payload) -> tuple[str, None]:
         self.verify_dict_config("jwt")
         key = self.enc_dec_jwt_callback["key"]
         algorithm = self.enc_dec_jwt_callback["algorithm"]
@@ -116,18 +117,17 @@ class GenJwt(Core):
     #         self.gen_abort_error("Request body must be JSON", 400)
     #     return request.get_json()
 
-    def add_jwt_extra_fields(self, func):
-        """Decorator to add extra fields to the JWT payload, default fields are:
+    def jwt_claims(self, func) -> typing.Callable:
+        """Function to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
         - exp: expiration time of the JWT
 
         :param func: function to be decorated
         :return: the function to wrap should return a dictionary with the extra fields"""
-        self.jwt_extra_fields = func()
-        return func
+        self.jwt_fields_attr = func()
     
-    def get_basic_auth_credentials(self, func):
+    def get_basic_auth_credentials(self, func) -> typing.Callable:
         self.basic_auth_callback = func()
         return func
 
@@ -156,7 +156,7 @@ class DecJwt(Core):
         self.enc_dec_jwt_callback: dict = None
         self.get_jwt_claims_to_verify_callback: list = None
     
-    def __decode_jwt(self):
+    def __decode_jwt(self) -> tuple[str, None]:
         auth_header = request.headers.get("Authorization")
         auth_header = auth_header.split(" ")
         token = auth_header[1]
