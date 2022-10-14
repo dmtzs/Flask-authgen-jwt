@@ -74,14 +74,19 @@ class Core():
             return func
 
 class GenJwt(Core):
-    def __init__(self):
+    def __init__(self, default_jwt_claims: bool = True):
         self.jwt_fields_attr: dict = None
         self.basic_auth_callback: dict = None
+        self.default_jwt_claims: bool = default_jwt_claims
 
     def __create_jwt_payload(self) -> dict:
-        payload = self.basic_auth_callback
-        payload["expiration"] = self.enc_dec_jwt_callback["expiration"]
-        if self.jwt_fields_attr:
+        if self.default_jwt_claims:
+            payload = self.basic_auth_callback
+        else:
+            payload = {}
+        if not self.jwt_fields_attr:
+            self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
+        else:
             payload.update(self.jwt_fields_attr)
         return payload
     
@@ -117,11 +122,10 @@ class GenJwt(Core):
     #         self.gen_abort_error("Request body must be JSON", 400)
     #     return request.get_json()
 
-    def jwt_claims(self, func) -> typing.Callable:
+    def jwt_claims(self, func):
         """Function to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
-        - exp: expiration time of the JWT
 
         :param func: function to be decorated
         :return: the function to wrap should return a dictionary with the extra fields"""
