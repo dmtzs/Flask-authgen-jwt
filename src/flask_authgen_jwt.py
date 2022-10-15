@@ -116,12 +116,7 @@ class GenJwt(Core):
             print(f"The following ERROR occurred in {__file__}: {ex}")
             encoded_token = None
         return encoded_token
-    
-    # def get_json_body(self):# Could be useful later for personalized basic auth config
-    #     if not request.is_json:
-    #         self.gen_abort_error("Request body must be JSON", 400)
-    #     return request.get_json()
-
+        
     def jwt_claims(self, func):
         """Function to add the claims to the JWT payload, default fields are:
         - username: username of the user
