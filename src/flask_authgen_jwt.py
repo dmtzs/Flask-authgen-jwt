@@ -116,17 +116,28 @@ class GenJwt(Core):
             print(f"The following ERROR occurred in {__file__}: {ex}")
             encoded_token = None
         return encoded_token
-        
+
     def jwt_claims(self, func):
-        """Function to add the claims to the JWT payload, default fields are:
+        """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
+        But can be changed by the user in the creation of the object of this class
+        You should add the next keys inside the dictionary but are not obligatory:
+        - exp: expiration time of the JWT
+        - iat: issued at time of the JWT
+        - leeway: leeway time of the JWT
+        - iss: issuer of the JWT
 
         :param func: function to be decorated
         :return: the function to wrap should return a dictionary with the extra fields"""
         self.jwt_fields_attr = func()
     
     def get_basic_auth_credentials(self, func) -> typing.Callable:
+        """Decorator to get the basic auth credentials
+        :param f: function to be decorated, should return a dictionary with the following keys:
+            - username: username of the user
+            - password: password of the user
+        :return: the function to wrap that returns the dictionary specified above"""
         self.basic_auth_callback = func()
         return func
 
