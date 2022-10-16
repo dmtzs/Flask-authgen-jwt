@@ -31,6 +31,8 @@ class Core():
         return func
 
     def verify_dict_config(self, config: str):
+        """Method that veryfies the JWT configuration generator and for basic auth
+        :param config: str to identify which configuration to verify"""
         if config == "jwt":
             claims = ["key", "algorithm"]
             for claim in claims:
@@ -43,6 +45,8 @@ class Core():
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
 
     def verify_user_roles(self, roles: list):
+        """Method to verify the user roles if are correct
+        :param roles: list of roles to verify against the user roles callback"""
         if roles is not None:
             if self.get_user_roles_callback is None:
                 self.gen_abort_error("get_user_roles decorator and function is not defined is not defined", 500)
@@ -65,29 +69,47 @@ class Core():
         return func
 
     def gen_abort_error(self, error: str, status_code: int):
+        """Method to generate the abort error with the error message and status code
+        :param error: error message in string format
+        :param status_code: status code in int format"""
         abort(make_response(jsonify({"error": error}), status_code))
 
     def ensure_sync(self, func) -> typing.Callable:
+        """Decorator to ensure the function is synchronous
+        :param f: function to be decorated
+        :return: the function to wrap"""
         try:
             return current_app.ensure_sync(func)
         except AttributeError:
             return func
 
 class GenJwt(Core):
-    def __init__(self, default_jwt_claims: bool = True):
+    def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True):
         self.jwt_fields_attr: dict = None
         self.basic_auth_callback: dict = None
         self.default_jwt_claims: bool = default_jwt_claims
+        self.registered_claims_only: bool = registered_claims_only
+    
+    def __validate_registered_claims(self):
+        registered_claims = ["iss", "sub", "aud", "exp", "nbf", "iat", "jti"]
+        for claim in self.jwt_fields_attr:
+            if claim not in registered_claims:
+                self.gen_abort_error(f"The claim {claim} is not a registered claim", 400)
 
     def __create_jwt_payload(self) -> dict:
-        if self.default_jwt_claims:
-            payload = self.basic_auth_callback
-        else:
-            payload = {}
         if not self.jwt_fields_attr:
-            self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
-        else:
+                self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
+        if self.registered_claims_only:
+            self.__validate_registered_claims()
+            payload = {}
             payload.update(self.jwt_fields_attr)
+        else:
+            if self.default_jwt_claims and not self.registered_claims_only:
+                payload = self.basic_auth_callback
+                payload.update(self.jwt_fields_attr)
+            else:
+                payload = self.jwt_fields_attr
+            
         return payload
     
     def __verify_basic_auth(self):
