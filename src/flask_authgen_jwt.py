@@ -98,7 +98,7 @@ class GenJwt(Core):
 
     def __create_jwt_payload(self) -> dict:
         if not self.jwt_fields_attr:
-                self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
+            self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
         if self.registered_claims_only:
             self.__validate_registered_claims()
             payload = {}
