@@ -187,6 +187,7 @@ class DecJwt(Core):
     token: dict = None
     def __init__(self):
         self.get_jwt_claims_to_verify_callback: list = None
+        self.credentials_success_callback: dict = None
     
     def __decode_jwt(self) -> tuple[str, None]:
         auth_header = request.headers.get("Authorization")
@@ -222,8 +223,17 @@ class DecJwt(Core):
     def get_jwt_claims_to_verify(self, func) -> typing.Callable:
         """Decorator to get the claims to verify in the token
         :param func: function to be decorated, should return a list of the claims to verify
-        :return: the function to wrap that returns the list of the claims to verify"""
+        :return: the function to wrap that returns the a boolean field"""
         self.get_jwt_claims_to_verify_callback = func()
+        return func
+
+    def verify_jwt_credentials(self, func) -> typing.Callable:
+        """Decorator to get the credentials from database or whatever part
+        to verify the token fields later
+        :param func: function to be decorated
+        :return: the function to wrap that returns the dictionary with the credentials.
+        the dictionary keys of this decorator should be the same as the claims of the token that you want to validate"""
+        self.credentials_success_callback = func()
         return func
     
     def login_required(self, func=None, roles=None):
