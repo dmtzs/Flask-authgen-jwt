@@ -18,6 +18,7 @@ except ImportError as eImp:
     print(f"The following import ERROR occurred in {__file__}: {eImp}")
 
 class Core():
+    basic_auth_callback: dict = None
     enc_dec_jwt_callback: dict = None
     get_user_roles_callback: list = None
 
@@ -86,7 +87,6 @@ class Core():
 class GenJwt(Core):
     def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True):
         self.jwt_fields_attr: dict = None
-        self.basic_auth_callback: dict = None
         self.default_jwt_claims: bool = default_jwt_claims
         self.registered_claims_only: bool = registered_claims_only
     
@@ -184,8 +184,8 @@ class GenJwt(Core):
         return func_to_receive
 
 class DecJwt(Core):
+    token: dict = None
     def __init__(self):
-        self.enc_dec_jwt_callback: dict = None
         self.get_jwt_claims_to_verify_callback: list = None
     
     def __decode_jwt(self) -> tuple[str, None]:
@@ -218,6 +218,13 @@ class DecJwt(Core):
                         self.gen_abort_error(f"The claim {claim} is not in the token", 400)
             if len(token) < 1:
                 self.gen_abort_error("Invalid token", 401)
+
+    def get_jwt_claims_to_verify(self, func) -> typing.Callable:
+        """Decorator to get the claims to verify in the token
+        :param func: function to be decorated, should return a list of the claims to verify
+        :return: the function to wrap that returns the list of the claims to verify"""
+        self.get_jwt_claims_to_verify_callback = func()
+        return func
     
     def login_required(self, func=None, roles=None):
         if func is not None and (roles is not None):
@@ -231,6 +238,7 @@ class DecJwt(Core):
                     token = self.__decode_jwt()
                     self.__verify_token(token)
                     self.verify_user_roles(roles)
+                    self.token = token
 
                 return self.ensure_sync(func)(*args, **kwargs)
             return wrapper
