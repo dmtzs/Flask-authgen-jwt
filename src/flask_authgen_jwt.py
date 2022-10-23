@@ -86,7 +86,7 @@ class Core():
             return func
 
 class GenJwt(Core):
-    def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True, complete_traceback_genjwt: bool = False):
+    def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True, complete_traceback_genjwt: bool = False) -> None:
         self.jwt_fields_attr: dict = None
         self.default_jwt_claims: bool = default_jwt_claims
         self.registered_claims_only: bool = registered_claims_only
@@ -214,7 +214,7 @@ class GenJwt(Core):
 
 class DecJwt(Core):
     token: dict = None
-    def __init__(self, token_as_attr: bool = False, complete_traceback_decjwt: bool = False):
+    def __init__(self, token_as_attr: bool = False, complete_traceback_decjwt: bool = False) -> None:
         self.token_as_attr: bool = token_as_attr
         self.credentials_success_callback: dict = None
         self.get_jwt_claims_to_verify_callback: list = None
@@ -240,7 +240,7 @@ class DecJwt(Core):
             decoded_token = None
         return decoded_token
 
-    def __verify_token(self, token):
+    def __verify_token(self, token) -> None:
         """Verify the token, if its None the something went wrong with the decoding of the token.
         If the token is not None, then verify the claims if you implement the get_jwt_claims_to_verify decorator.
         By default the method verify if there is at least one claim inside jwt, if not then invalid token error will appear.
@@ -256,7 +256,7 @@ class DecJwt(Core):
             if len(token) < 1:
                 self.gen_abort_error("Invalid token", 401)
     
-    def __authenticate_credentials(self, token):
+    def __authenticate_credentials(self, token) -> None:
         """
         Verify the credentials of the user, if the credentials are not correct then the user will be unauthorized
         :param token: token to verify the credentials
@@ -269,7 +269,7 @@ class DecJwt(Core):
                 if self.credentials_success_callback[key] != token[key]:
                     self.gen_abort_error("Credentials to validate for authentication inside token are not correct", 401)
 
-    def __set_token_as_attr(self, token):
+    def __set_token_as_attr(self, token) -> None:
         """
         Method to set the token as an attribute of the class
         :param token: token to set as attribute
