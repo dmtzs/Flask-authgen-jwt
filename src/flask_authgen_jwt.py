@@ -32,7 +32,7 @@ class Core():
         self.enc_dec_jwt_callback = func()
         return func
 
-    def verify_dict_config(self, config: str):
+    def verify_dict_config(self, config: str) -> None:
         """Method that veryfies the JWT configuration generator and for basic auth
         :param config: str to identify which configuration to verify"""
         if config == "jwt":
@@ -46,7 +46,7 @@ class Core():
                 if claim not in self.basic_auth_callback:
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
 
-    def verify_user_roles(self, roles: list):
+    def verify_user_roles(self, roles: list) -> None:
         """Method to verify the user roles if are correct
         :param roles: list of roles to verify against the user roles callback"""
         if roles is not None:
@@ -70,7 +70,7 @@ class Core():
         self.get_user_roles_callback = func()
         return func
 
-    def gen_abort_error(self, error: str, status_code: int):
+    def gen_abort_error(self, error: str, status_code: int) -> None:
         """Method to generate the abort error with the error message and status code
         :param error: error message in string format
         :param status_code: status code in int format"""
@@ -92,7 +92,7 @@ class GenJwt(Core):
         self.registered_claims_only: bool = registered_claims_only
         self.complete_traceback_genjwt: bool = complete_traceback_genjwt
     
-    def __validate_registered_claims(self):
+    def __validate_registered_claims(self) -> None:
         """
         Method to validate the registered claims if registered_claims_only is True.
         Cause this means that the user can only use the registered(standard) claims.
@@ -122,7 +122,7 @@ class GenJwt(Core):
             
         return payload
     
-    def __verify_basic_auth(self):
+    def __verify_basic_auth(self) -> None:
         """
         Method to decode and verify the basic auth credentials in the expected format
         """
@@ -157,7 +157,7 @@ class GenJwt(Core):
             encoded_token = None
         return encoded_token
 
-    def jwt_claims(self, func):
+    def jwt_claims(self, func) -> typing.Callable:
         """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
