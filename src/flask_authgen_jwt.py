@@ -32,7 +32,7 @@ class Core():
         self.enc_dec_jwt_callback = func()
         return func
 
-    def verify_dict_config(self, config: str):
+    def verify_dict_config(self, config: str) -> None:
         """Method that veryfies the JWT configuration generator and for basic auth
         :param config: str to identify which configuration to verify"""
         if config == "jwt":
@@ -46,7 +46,7 @@ class Core():
                 if claim not in self.basic_auth_callback:
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
 
-    def verify_user_roles(self, roles: list):
+    def verify_user_roles(self, roles: list) -> None:
         """Method to verify the user roles if are correct
         :param roles: list of roles to verify against the user roles callback"""
         if roles is not None:
@@ -70,7 +70,7 @@ class Core():
         self.get_user_roles_callback = func()
         return func
 
-    def gen_abort_error(self, error: str, status_code: int):
+    def gen_abort_error(self, error: str, status_code: int) -> None:
         """Method to generate the abort error with the error message and status code
         :param error: error message in string format
         :param status_code: status code in int format"""
@@ -86,13 +86,13 @@ class Core():
             return func
 
 class GenJwt(Core):
-    def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True, complete_traceback_genjwt: bool = False):
+    def __init__(self, default_jwt_claims: bool = True, registered_claims_only: bool = True, complete_traceback_genjwt: bool = False) -> None:
         self.jwt_fields_attr: dict = None
         self.default_jwt_claims: bool = default_jwt_claims
         self.registered_claims_only: bool = registered_claims_only
         self.complete_traceback_genjwt: bool = complete_traceback_genjwt
     
-    def __validate_registered_claims(self):
+    def __validate_registered_claims(self) -> None:
         """
         Method to validate the registered claims if registered_claims_only is True.
         Cause this means that the user can only use the registered(standard) claims.
@@ -122,7 +122,7 @@ class GenJwt(Core):
             
         return payload
     
-    def __verify_basic_auth(self):
+    def __verify_basic_auth(self) -> None:
         """
         Method to decode and verify the basic auth credentials in the expected format
         """
@@ -157,7 +157,7 @@ class GenJwt(Core):
             encoded_token = None
         return encoded_token
 
-    def jwt_claims(self, func):
+    def jwt_claims(self, func) -> typing.Callable:
         """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
@@ -214,7 +214,7 @@ class GenJwt(Core):
 
 class DecJwt(Core):
     token: dict = None
-    def __init__(self, token_as_attr: bool = False, complete_traceback_decjwt: bool = False):
+    def __init__(self, token_as_attr: bool = False, complete_traceback_decjwt: bool = False) -> None:
         self.token_as_attr: bool = token_as_attr
         self.credentials_success_callback: dict = None
         self.get_jwt_claims_to_verify_callback: list = None
@@ -240,7 +240,7 @@ class DecJwt(Core):
             decoded_token = None
         return decoded_token
 
-    def __verify_token(self, token):
+    def __verify_token(self, token) -> None:
         """Verify the token, if its None the something went wrong with the decoding of the token.
         If the token is not None, then verify the claims if you implement the get_jwt_claims_to_verify decorator.
         By default the method verify if there is at least one claim inside jwt, if not then invalid token error will appear.
@@ -256,7 +256,7 @@ class DecJwt(Core):
             if len(token) < 1:
                 self.gen_abort_error("Invalid token", 401)
     
-    def __authenticate_credentials(self, token):
+    def __authenticate_credentials(self, token) -> None:
         """
         Verify the credentials of the user, if the credentials are not correct then the user will be unauthorized
         :param token: token to verify the credentials
@@ -269,7 +269,7 @@ class DecJwt(Core):
                 if self.credentials_success_callback[key] != token[key]:
                     self.gen_abort_error("Credentials to validate for authentication inside token are not correct", 401)
 
-    def __set_token_as_attr(self, token):
+    def __set_token_as_attr(self, token) -> None:
         """
         Method to set the token as an attribute of the class
         :param token: token to set as attribute
