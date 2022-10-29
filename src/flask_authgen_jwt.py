@@ -6,8 +6,6 @@ This module provides creation of new jwt also using basic auth to get the jwt an
 :license:   MIT, see LICENSE for more details.
 """
 
-#TODO: Verify at the end of the core implementation the better way to implement error handlers so you can manipulate the error messages
-
 try:
     import jwt
     import typing
