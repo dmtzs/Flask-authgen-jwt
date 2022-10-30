@@ -25,7 +25,7 @@
 
 
 ## Documentation
-You can go to the documentation going to the wiki of this repository or click [here](#) to go to the wiki directly
+You can go to the documentation going to the wiki of this repository or click [here](https://github.com/dmtzs/Flask-authgen-jwt/wiki) to go to the wiki directly
 
 ## Supported versions for releases
 Still in development
