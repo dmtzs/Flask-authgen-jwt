@@ -9,7 +9,6 @@ This module provides creation of new jwt also using basic auth to get the jwt an
 try:
     import jwt
     import typing
-    import traceback
     from functools import wraps
     from base64 import b64decode
     from flask import request, current_app, abort, make_response, jsonify
