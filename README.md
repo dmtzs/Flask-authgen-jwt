@@ -29,4 +29,5 @@
 You can go to the documentation going to the wiki of this repository or click [here](https://github.com/dmtzs/Flask-authgen-jwt/wiki) to go to the wiki directly
 
 ## Supported versions for releases
-Still in development
+Here you can see a description of the versions supported or that are deprecated but still functional.
+Please click [here](https://github.com/dmtzs/Flask-authgen-jwt/blob/master/SECURITY.md) to go that specification.
