@@ -8,7 +8,7 @@ This module provides creation of new jwt also using basic auth to get the jwt an
 
 try:
     import jwt
-    import typing
+    from typing import Callable
     from functools import wraps
     from base64 import b64decode
     from flask import request, current_app, abort, make_response, jsonify
@@ -20,7 +20,7 @@ class Core():
     enc_dec_jwt_callback: dict = None
     get_user_roles_callback: list = None
 
-    def enc_dec_jwt_config(self, func) -> typing.Callable:
+    def enc_dec_jwt_config(self, func) -> Callable:
         """Decorator to verify the JWT token
         :param f: function to be decorated
         :return: the function to wrap should return a dictionary with the following keys:
@@ -60,7 +60,7 @@ class Core():
                 if not role_flag:
                     self.gen_abort_error("User does not have the required roles", 403)
     
-    def get_user_roles(self, func) -> typing.Callable:
+    def get_user_roles(self, func) -> Callable:
         """Decorator to get the user roles
         :param f: function to be decorated
         :return: user roles as a list"""
@@ -73,7 +73,7 @@ class Core():
         :param status_code: status code in int format"""
         abort(make_response(jsonify({"error": error}), status_code))
 
-    def ensure_sync(self, func) -> typing.Callable:
+    def ensure_sync(self, func) -> Callable:
         """Decorator to ensure the function is synchronous
         :param f: function to be decorated
         :return: the function to wrap"""
@@ -153,7 +153,7 @@ class GenJwt(Core):
             encoded_token = None
         return encoded_token
 
-    def jwt_claims(self, func) -> typing.Callable:
+    def jwt_claims(self, func) -> Callable:
         """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
@@ -168,7 +168,7 @@ class GenJwt(Core):
         :return: the function to wrap should return a dictionary with the extra fields"""
         self.jwt_fields_attr = func()
     
-    def get_basic_auth_credentials(self, func) -> typing.Callable:
+    def get_basic_auth_credentials(self, func) -> Callable:
         """Decorator to get the basic auth credentials
         :param f: function to be decorated, should return a dictionary with the following keys:
             - username: username of the user
@@ -261,14 +261,14 @@ class DecJwt(Core):
         if self.token_as_attr:
             self.token = token
 
-    def get_jwt_claims_to_verify(self, func) -> typing.Callable:
+    def get_jwt_claims_to_verify(self, func) -> Callable:
         """Decorator to get the claims to verify in the token
         :param func: function to be decorated, should return a list of the claims to verify
         :return: the function to wrap that returns the a boolean field"""
         self.get_jwt_claims_to_verify_callback = func()
         return func
 
-    def verify_jwt_credentials(self, func) -> typing.Callable:
+    def verify_jwt_credentials(self, func) -> Callable:
         """Decorator to get the credentials from database or whatever part
         to verify the token fields later
         :param func: function to be decorated
