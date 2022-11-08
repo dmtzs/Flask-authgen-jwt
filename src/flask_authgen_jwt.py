@@ -37,20 +37,15 @@ class Core():
             for claim in claims:
                 if claim not in self.enc_dec_jwt_callback:
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
-        elif config == "basic_auth":
-            claims = ["username", "password"]
-            for claim in claims:
-                if claim not in self.basic_auth_callback:
-                    self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
 
-    def verify_user_roles(self, roles: list) -> None:
+    def verify_user_roles(self, roles: list, user: str) -> None:
         """Method to verify the user roles if are correct
         :param roles: list of roles to verify against the user roles callback"""
         if roles is not None:
             if self.get_user_roles_callback is None:
                 self.gen_abort_error("get_user_roles decorator and function is not defined is not defined", 500)
             else:
-                user_roles = self.get_user_roles_callback
+                user_roles = self.ensure_sync(self.get_user_roles_callback)(user)
                 # if not set(roles).issubset(set(user_roles)):
                 role_flag = False
                 for role in user_roles:
@@ -61,10 +56,11 @@ class Core():
                     self.gen_abort_error("User does not have the required roles", 403)
     
     def get_user_roles(self, func) -> Callable:
-        """Decorator to get the user roles
+        """Decorator to get the user roles by the user that was received from the JWT or basic auth.
+        To the function you will decorate with this decorator you will have available the user variable
         :param f: function to be decorated
         :return: user roles as a list"""
-        self.get_user_roles_callback = func()
+        self.get_user_roles_callback = func
         return func
 
     def gen_abort_error(self, error: str, status_code: int) -> None:
@@ -118,7 +114,7 @@ class GenJwt(Core):
             
         return payload
     
-    def __verify_basic_auth(self) -> None:
+    def __dec_set_basic_auth(self) -> None:
         """
         Method to decode and verify the basic auth credentials in the expected format
         """
@@ -131,11 +127,13 @@ class GenJwt(Core):
         credentials = credentials.split(":")
         if len(credentials) != 2:
             self.gen_abort_error("Authorization header must be Basic with user and password only", 400)
-        self.verify_dict_config("basic_auth")
-        username = self.basic_auth_callback["username"]
-        password = self.basic_auth_callback["password"]
-        if credentials[0] != username or credentials[1] != password:
-            self.gen_abort_error("User or password is not correct", 401)
+        username = credentials[0]
+        password = credentials[1]
+        if self.basic_auth_callback:
+            return self.ensure_sync(self.basic_auth_callback)(
+                username, password), username
+        else:
+            self.gen_abort_error("basic_auth decorator and function is not defined", 500)
     
     def __encode_jwt(self, payload) -> tuple[str, None]:
         """
@@ -170,11 +168,10 @@ class GenJwt(Core):
     
     def get_basic_auth_credentials(self, func) -> Callable:
         """Decorator to get the basic auth credentials
-        :param f: function to be decorated, should return a dictionary with the following keys:
-            - username: username of the user
-            - password: password of the user
-        :return: the function to wrap that returns the dictionary specified above"""
-        self.basic_auth_callback = func()
+        :param f: function to be decorated, should return a boolean:
+        :return: the function to wrap that returns a boolean, True if the credentials are correct, False if not
+        User should implement the function to validate the credentials and return the correct boolean"""
+        self.basic_auth_callback = func
         return func
 
     def generate_jwt(self, func=None, roles=None):
@@ -186,10 +183,13 @@ class GenJwt(Core):
                 if self.enc_dec_jwt_callback is None:
                     self.gen_abort_error("get_decode_jwt_attributes decorator and function to verify password and username is not set", 500)
                 else:
-                    self.__verify_basic_auth()
-                    jwt_payload = self.__create_jwt_payload()
-                    token = self.__encode_jwt(jwt_payload)
-                    self.verify_user_roles(roles)
+                    grant_credentials_access = self.__dec_set_basic_auth()
+                    if grant_credentials_access:
+                        self.verify_user_roles(roles, grant_credentials_access[1])
+                        jwt_payload = self.__create_jwt_payload()
+                        token = self.__encode_jwt(jwt_payload)
+                    else:
+                        self.gen_abort_error("The credentials are not correct", 401)
 
                 return self.ensure_sync(func)(token, *args, **kwargs)
             return wrapper
@@ -288,7 +288,7 @@ class DecJwt(Core):
                 else:
                     token = self.__decode_jwt()
                     self.__verify_token(token)
-                    self.verify_user_roles(roles)
+                    self.verify_user_roles(roles)# TODO: Cambiar como el de arriba, mandar user y lo mismo para el metodo que decodifica el jwt
                     self.__authenticate_credentials(token)
                     self.__set_token_as_attr(token)
 
