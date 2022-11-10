@@ -69,7 +69,7 @@ class Core():
         :param status_code: status code in int format"""
         abort(make_response(jsonify({"error": error}), status_code))
 
-    def ensure_sync(self, func) -> Callable:
+    def ensure_sync(self, func: Callable) -> Callable:
         """Decorator to ensure the function is synchronous
         :param f: function to be decorated
         :return: the function to wrap"""
@@ -119,7 +119,7 @@ class GenJwt(Core):
         else:
             self.gen_abort_error("basic_auth decorator and function is not defined", 500)
     
-    def __encode_jwt(self, payload) -> Optional[str]:
+    def __encode_jwt(self, payload: dict) -> Optional[str]:
         """
         Method to encode the JWT token using the key and algorithm specified in the enc_dec_jwt_config decorator
         that returns the dictionary with the configuration.
@@ -208,7 +208,7 @@ class DecJwt(Core):
             decoded_token = None
         return decoded_token
 
-    def __verify_token(self, token) -> None:
+    def __verify_token(self, token: dict) -> None:
         """Verify the token, if its None the something went wrong with the decoding of the token.
         If the token is not None, then verify the claims if you implement the get_jwt_claims_to_verify decorator.
         By default the method verify if there is at least one claim inside jwt, if not then invalid token error will appear.
@@ -230,7 +230,7 @@ class DecJwt(Core):
                 if key not in token:
                     self.gen_abort_error("Credentials to validate for authentication inside token are not correct", 401)
     
-    def __authenticate_credentials(self, token) -> None:
+    def __authenticate_credentials(self, token: dict) -> bool:
         """
         Verify the credentials of the user, if the credentials are not correct then the user will be unauthorized
         :param token: token to verify the credentials
@@ -255,7 +255,7 @@ class DecJwt(Core):
         :return: the function to wrap that returns the a boolean field"""
         self.get_jwt_claims_to_verify_callback = func()
 
-    def verify_jwt_credentials(self, func) -> Callable[[str, str], dict]:
+    def verify_jwt_credentials(self, func: Callable) -> Callable[[str, str], dict]:
         """Decorator to get the credentials from database or whatever part
         to verify the token fields later
         :param func: function to be decorated
