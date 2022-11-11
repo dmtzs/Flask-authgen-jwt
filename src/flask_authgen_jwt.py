@@ -20,7 +20,7 @@ class Core():
     enc_dec_jwt_callback: dict = None
     get_user_roles_callback: list = None
 
-    def enc_dec_jwt_config(self, func: Callable[[None], dict]) -> None:
+    def enc_dec_jwt_config(self, func: Callable[[None], dict]) -> Callable[[None], dict]:
         """Decorator to verify the JWT token
         :param f: function to be decorated
         :return: the function to wrap should return a dictionary with the following keys:
@@ -94,7 +94,7 @@ class GenJwt(Core):
             
         return payload
     
-    def __dec_set_basic_auth(self) -> None:
+    def __dec_set_basic_auth(self) -> Optional[bool]:
         """
         Method to decode and verify the basic auth credentials in the expected format
         """
@@ -188,7 +188,7 @@ class DecJwt(Core):
         self.credentials_success_callback: bool = None
         self.get_jwt_claims_to_verify_callback: list[str] = None
     
-    def __decode_jwt(self) -> Optional[str]:
+    def __decode_jwt(self) -> Optional[dict]:
         """
         Decode the JWT token using the key and algorithm specified in the enc_dec_jwt_config decorator
         that returns the dictionary with the configuration.
@@ -255,7 +255,7 @@ class DecJwt(Core):
         :return: the function to wrap that returns the a boolean field"""
         self.get_jwt_claims_to_verify_callback = func()
 
-    def verify_jwt_credentials(self, func: Callable) -> Callable[[str, str], dict]:
+    def verify_jwt_credentials(self, func: Callable[[str, str], bool]) -> Callable[[str, str], bool]:
         """Decorator to get the credentials from database or whatever part
         to verify the token fields later
         :param func: function to be decorated
