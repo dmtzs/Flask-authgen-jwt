@@ -159,6 +159,9 @@ class GenJwt(Core):
         return func
 
     def generate_jwt(self, func=None, roles=None):
+        """
+        Decorator to generate the JWT token through the function of the endpoint that responds the token
+        """
         if func is not None and (roles is not None):
             raise ValueError("role and optional are the only supported arguments")
         def func_to_receive(func):
@@ -265,6 +268,10 @@ class DecJwt(Core):
         return func
     
     def login_required(self, func=None, roles=None):
+        """
+        Decorator to verify the JWT token through the function of the endpoints that
+        are requested by the user, also validates the roles setted in the endpoint.
+        """
         if func is not None and (roles is not None):
             raise ValueError("role and optional are the only supported arguments")
         def func_to_receive(func):
