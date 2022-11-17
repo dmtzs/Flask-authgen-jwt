@@ -19,6 +19,7 @@ class Core():
     basic_auth_callback: Callable[[str, str], bool] = None
     enc_dec_jwt_callback: dict = None
     get_user_roles_callback: list = None
+    personal_credentials: tuple[str, str] = None
 
     def enc_dec_jwt_config(self, func: Callable[[None], dict]) -> Callable[[None], dict]:
         """Decorator to verify the JWT token
@@ -27,6 +28,23 @@ class Core():
             - key: key to decode the JWT
             - algorithm: algorithm to decode the JWT """
         self.enc_dec_jwt_callback = func()
+        return func
+
+    def personal_credentials_field(self, func: Callable[[None], tuple[str, str]]) -> Callable[[None], tuple[str, str]]:
+        """
+        Decorator to set the personal credentials, if youu dont want to use username and password inside the token
+        then with this you can return a tuple in which the first element is the username and the second is the password
+        but as you want to name that respective fields so the library will validate using the fields you set
+        :param func: function to be decorated
+        :return: the tuple with the username and password with personal names
+
+        :Example:
+        @dec_jwt.personal_credentials_field
+        
+        def get_personal_credentials():
+            return "my_username_personal_name_field", "my_password_personal_name_field"
+        """
+        self.personal_credentials = func()
         return func
 
     def verify_dict_config(self, config: str) -> None:
@@ -89,6 +107,11 @@ class GenJwt(Core):
         """
         if not self.jwt_fields_attr:
             self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
+        if self.personal_credentials is not None:
+            bauth_credentials[self.personal_credentials[0]] = bauth_credentials["username"]
+            bauth_credentials[self.personal_credentials[1]] = bauth_credentials["password"]
+            del bauth_credentials["username"]
+            del bauth_credentials["password"]
         payload = bauth_credentials
         payload.update(self.jwt_fields_attr)
             
@@ -226,8 +249,14 @@ class DecJwt(Core):
                         self.gen_abort_error(f"The claim {claim} is not in the token", 400)
             if len(token) < 1:
                 self.gen_abort_error("Invalid token", 401)
-            if ("username" not in token) or ("password" not in token):
-                self.gen_abort_error("Invalid token", 401)
+            if self.personal_credentials is not None:
+                per_username = self.personal_credentials[0]
+                per_password = self.personal_credentials[1]
+                if (per_username not in token) or (per_password not in token):
+                    self.gen_abort_error("Invalid token", 401)
+            else:
+                if ("username" not in token) or ("password" not in token):
+                    self.gen_abort_error("Invalid token", 401)
             keys_to_validate = self.get_jwt_claims_to_verify_callback
             for key in keys_to_validate:
                 if key not in token:
@@ -240,8 +269,12 @@ class DecJwt(Core):
         """
         if self.credentials_success_callback is None:
             self.gen_abort_error("get_credentials_success decorator is not set", 500)
-        username_jwt = token["username"]
-        password_jwt = token["password"]
+        if self.personal_credentials is None:
+            username_jwt = token["username"]
+            password_jwt = token["password"]
+        else:
+            username_jwt = token[self.personal_credentials[0]]
+            password_jwt = token[self.personal_credentials[1]]
         return self.ensure_sync(self.credentials_success_callback)(username_jwt, password_jwt)
 
     def __set_token_as_attr(self, token: dict) -> None:
@@ -282,11 +315,14 @@ class DecJwt(Core):
                 else:
                     token = self.__decode_jwt()
                     self.__verify_token(token)
-                    self.verify_user_roles(roles, token["username"])
 
                     grant_access = self.__authenticate_credentials(token)
                     if not grant_access:
                         self.gen_abort_error("The credentials are not correct", 401)
+                    if self.personal_credentials is not None:
+                        self.verify_user_roles(roles, token[self.personal_credentials[0]])
+                    else:
+                        self.verify_user_roles(roles, token["username"])
                     self.__set_token_as_attr(token)
 
                 return self.ensure_sync(func)(*args, **kwargs)
