@@ -48,7 +48,7 @@ def jwt_claims() -> dict:
     }
     return claims
 
-@auth.verify_jwt_credentials#TODO: Checar si debe cambiar o no
+@auth.verify_jwt_credentials
 def creds(username_jwt: str, password_jwt: str) -> bool:
     my_dict = {
         "username_jwt": username_jwt,
@@ -60,12 +60,12 @@ def creds(username_jwt: str, password_jwt: str) -> bool:
 # -------------Endpoints-------------
 @app.route("/")
 @auth.login_required(roles=["admin", "eder"])
-def index():
-    return Response("Todo bien"), 200
+def index() -> Response:
+    return make_response("Todo bien", 200)
 
 @app.route("/generate_token", methods=["POST"])
 @gen_auth.generate_jwt(roles=["eder", "user"])
-def gen_token(token):
+def gen_token(token) -> Response:
     response = {
         "status": "success",
         "token": token
@@ -73,7 +73,7 @@ def gen_token(token):
     return make_response(jsonify(response)), 200
 
 @app.route("/temp")
-def temp():
+def temp() -> Response:
     test = (("val1", "hola"), ("val2", "prueba2"))
     response = {
         "message": "solo prueba",
