@@ -1,6 +1,8 @@
 # Personal files to ignore
 readFileAsBinary/
 my_tests/
+private-key.pem
+public-key.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
