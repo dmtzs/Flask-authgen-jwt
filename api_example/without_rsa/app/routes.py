@@ -7,12 +7,12 @@ except ImportError as eImp:
 
 @gen_auth.enc_dec_jwt_config
 @auth.enc_dec_jwt_config
-def test_creds() -> dict:
-    decode_attributes = {
+def enc_dec_creds() -> dict[str, str]:
+    enc_dec_attributes = {
         "key": "secret",
         "algorithm": "HS256",
     }
-    return decode_attributes
+    return enc_dec_attributes
 
 @gen_auth.personal_credentials_field
 @auth.personal_credentials_field
