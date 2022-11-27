@@ -10,7 +10,8 @@ try:
     import jwt
     from functools import wraps
     from base64 import b64decode
-    from typing import Callable, Optional
+    from datetime import datetime
+    from typing import Callable, Optional, Union
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.backends import default_backend
     from flask import request, current_app, abort, make_response, jsonify
@@ -19,11 +20,11 @@ except ImportError as eImp:
 
 class Core():
     basic_auth_callback: Callable[[str, str], bool] = None
-    enc_dec_jwt_callback: dict = None
+    enc_dec_jwt_callback: dict[Union[bytes, str]] = None
     get_user_roles_callback: list = None
     personal_credentials: tuple[str, str] = None
 
-    def enc_dec_jwt_config(self, func: Callable[[None], dict]) -> Callable[[None], dict]:
+    def enc_dec_jwt_config(self, func: Callable[[None], dict[str, Union[bytes, str]]]) -> Callable[[None], dict[str, Union[bytes, str]]]:
         """Decorator to verify the JWT token
         :param f: function to be decorated
         :return: the function to wrap should return a dictionary with the following keys:
@@ -106,7 +107,7 @@ class GenJwt(Core):
         self.jwt_fields_attr: dict = None
         self.rsa_encrypt: bool = rsa_encrypt
 
-    def __create_jwt_payload(self, bauth_credentials: dict) -> dict:
+    def __create_jwt_payload(self, bauth_credentials: dict[str, str]) -> dict[str, Union[str, datetime]]:
         """
         Method to create the JWT payload but still not encoded
         :return: JWT payload as a dictionary
