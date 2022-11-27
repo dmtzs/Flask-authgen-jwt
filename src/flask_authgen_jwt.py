@@ -252,7 +252,7 @@ class DecJwt(Core):
             if algorithm == "HS256":
                 decoded_token = jwt.decode(token, key, algorithms=[algorithm])
             elif algorithm == "RS256":
-                    decoded_token = jwt.decode(token, key, algorithms=[algorithm])
+                decoded_token = jwt.decode(token, key, algorithms=[algorithm])
             else:
                 message = "The algorithm RS256 is not supported, " \
                     "please verify the loading of your key or something relationated with the key"
