@@ -11,6 +11,8 @@ try:
     from functools import wraps
     from base64 import b64decode
     from typing import Callable, Optional
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.backends import default_backend
     from flask import request, current_app, abort, make_response, jsonify
 except ImportError as eImp:
     print(f"The following import ERROR occurred in {__file__}: {eImp}")
@@ -48,13 +50,16 @@ class Core():
         return func
 
     def verify_dict_config(self, config: str) -> None:
-        """Method that veryfies the JWT configuration generator and for basic auth
+        """Method that veryfies the JWT configuration generator
         :param config: str to identify which configuration to verify"""
         if config == "jwt":
             claims = ["key", "algorithm"]
             for claim in claims:
                 if claim not in self.enc_dec_jwt_callback:
                     self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
+        elif config == "rsa_pass":
+            if "passphrase" not in self.enc_dec_jwt_callback:
+                self.gen_abort_error("The claim passphrase is not in the dictionary", 400)
 
     def verify_user_roles(self, roles: list, user: str) -> None:
         """Method to verify the user roles if are correct
@@ -97,8 +102,9 @@ class Core():
             return func
 
 class GenJwt(Core):
-    def __init__(self) -> None:
+    def __init__(self, rsa_encrypt: bool = False) -> None:
         self.jwt_fields_attr: dict = None
+        self.rsa_encrypt: bool = rsa_encrypt
 
     def __create_jwt_payload(self, bauth_credentials: dict) -> dict:
         """
@@ -152,7 +158,21 @@ class GenJwt(Core):
         key = self.enc_dec_jwt_callback["key"]
         algorithm = self.enc_dec_jwt_callback["algorithm"]
         try:
-            encoded_token = jwt.encode(payload, key, algorithm=algorithm)
+            if algorithm == "HS256":
+                encoded_token = jwt.encode(payload, key, algorithm=algorithm)
+            elif algorithm == "RS256":
+                if self.rsa_encrypt:
+                    self.verify_dict_config("rsa_pass")
+                    passphrase = self.enc_dec_jwt_callback["passphrase"]
+                    private_key = serialization.load_pem_private_key(
+                            key, password=passphrase, backend=default_backend())
+                    encoded_token = jwt.encode(payload, private_key, algorithm=algorithm)
+                elif not self.rsa_encrypt:
+                    encoded_token = jwt.encode(payload, key, algorithm=algorithm)
+                else:
+                    message = "The algorithm RS256 is not supported, " \
+                        "please verify the loading of your key or something relationated with the key"
+                    self.gen_abort_error(message, 500)
         except Exception as ex:
             print(f"The following ERROR occurred in {__file__}: {ex}")
             encoded_token = None
@@ -228,7 +248,14 @@ class DecJwt(Core):
         key = self.enc_dec_jwt_callback["key"]
         algorithm = self.enc_dec_jwt_callback["algorithm"]
         try:
-            decoded_token = jwt.decode(token, key, algorithms=[algorithm])
+            if algorithm == "HS256":
+                decoded_token = jwt.decode(token, key, algorithms=[algorithm])
+            elif algorithm == "RS256":
+                    decoded_token = jwt.decode(token, key, algorithms=[algorithm])
+            else:
+                message = "The algorithm RS256 is not supported, " \
+                    "please verify the loading of your key or something relationated with the key"
+                self.gen_abort_error(message, 500)
         except Exception as ex:
             print(f"The following ERROR occurred in {__file__}: {ex}")
             decoded_token = None
