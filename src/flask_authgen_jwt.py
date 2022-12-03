@@ -104,7 +104,7 @@ class Core():
 
 class GenJwt(Core):
     def __init__(self, rsa_encrypt: bool = False) -> None:
-        self.jwt_fields_attr: dict = None
+        self.jwt_fields_attr: dict[str, datetime] = None
         self.rsa_encrypt: bool = rsa_encrypt
 
     def __create_jwt_payload(self, bauth_credentials: dict[str, str]) -> dict[str, Union[str, datetime]]:
@@ -179,7 +179,7 @@ class GenJwt(Core):
             encoded_token = None
         return encoded_token
 
-    def jwt_claims(self, func: Callable[[None], dict]) -> None:
+    def jwt_claims(self, func: Callable[[None], dict[str, datetime]]) -> None:
         """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
