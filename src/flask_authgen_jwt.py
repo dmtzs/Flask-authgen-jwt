@@ -20,7 +20,7 @@ except ImportError as eImp:
 
 class Core():
     basic_auth_callback: Callable[[str, str], bool] = None
-    enc_dec_jwt_callback: dict[Union[bytes, str]] = None
+    enc_dec_jwt_callback: dict[str, Union[bytes, str]] = None
     get_user_roles_callback: list = None
     personal_credentials: tuple[str, str] = None
 
@@ -104,7 +104,7 @@ class Core():
 
 class GenJwt(Core):
     def __init__(self, rsa_encrypt: bool = False) -> None:
-        self.jwt_fields_attr: dict = None
+        self.jwt_fields_attr: dict[str, datetime] = None
         self.rsa_encrypt: bool = rsa_encrypt
 
     def __create_jwt_payload(self, bauth_credentials: dict[str, str]) -> dict[str, Union[str, datetime]]:
@@ -179,7 +179,7 @@ class GenJwt(Core):
             encoded_token = None
         return encoded_token
 
-    def jwt_claims(self, func: Callable[[None], dict]) -> None:
+    def jwt_claims(self, func: Callable[[None], dict[str, datetime]]) -> None:
         """Decorator to add the claims to the JWT payload, default fields are:
         - username: username of the user
         - password: password of the user
@@ -290,7 +290,7 @@ class DecJwt(Core):
                 if key not in token:
                     self.gen_abort_error("Credentials to validate for authentication inside token are not correct", 401)
     
-    def __authenticate_credentials(self, token: dict) -> bool:
+    def __authenticate_credentials(self, token: dict[str, str]) -> bool:
         """
         Verify the credentials of the user, if the credentials are not correct then the user will be unauthorized
         :param token: token to verify the credentials
