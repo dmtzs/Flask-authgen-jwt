@@ -1,9 +1,5 @@
 name: Unit tests
 
-# on:
-#   pull_request:
-#     types: [opened, synchronize, reopened]
-
 on:
   push:
     branches:
@@ -11,10 +7,7 @@ on:
 
 jobs:
   test:
-    # if: "!(${{ github.event.pull_request.state }} == 'cancelled') && ${{ github.ref }} == 'refs/heads/master' && needs.changes.outputs.api == 'true'"
     runs-on: ubuntu-latest
-
-    # if: needs.changes.outputs.api == 'true'
     strategy:
       matrix:
         python-version: ["3.9", "3.10"]
