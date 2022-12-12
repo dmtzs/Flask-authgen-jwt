@@ -29,6 +29,6 @@ jobs:
 
       # Run the tests
       - name: Running unit tests
-        working-directory: ../../tests
+        working-directory: /home/runner/work/Flask-authgen-jwt/tests
         run: |
           python -m unittest
