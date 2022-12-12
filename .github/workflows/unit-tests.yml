@@ -33,7 +33,6 @@ jobs:
 
       # Run the tests
       - name: Running unit tests
-        # working-directory: tests
         run: |
           pwd
-          python -m unittest discover --import-mode=append tests/
+          python tests/*
