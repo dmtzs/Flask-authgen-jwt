@@ -27,12 +27,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: List directories and files
-        run: ls -la
-
-
       # Run the tests
       - name: Running unit tests
         run: |
-          pwd
           python tests/*
