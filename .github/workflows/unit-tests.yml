@@ -1,12 +1,17 @@
 name: Unit tests
 
+# on:
+#   pull_request:
+#     types: [opened, synchronize, reopened]
+
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - development
 
 jobs:
   test:
-    if: "!(${{ github.event.pull_request.state }} == 'cancelled') && ${{ github.ref }} == 'refs/heads/master' && needs.changes.outputs.api == 'true'"
+    # if: "!(${{ github.event.pull_request.state }} == 'cancelled') && ${{ github.ref }} == 'refs/heads/master' && needs.changes.outputs.api == 'true'"
     runs-on: ubuntu-latest
 
     # if: needs.changes.outputs.api == 'true'
