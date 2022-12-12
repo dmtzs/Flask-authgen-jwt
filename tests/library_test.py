@@ -1,5 +1,5 @@
 import sys
-sys.path.append('../src')
+sys.path.append('src')
 import unittest
 from flask_authgen_jwt import Core, DecJwt, GenJwt
 
