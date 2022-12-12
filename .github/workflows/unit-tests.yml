@@ -37,4 +37,4 @@ jobs:
         run: |
           pwd
           $(git ls-files)
-          python -m unittest discover
+          python -m unittest discover --import-mode=append tests/
