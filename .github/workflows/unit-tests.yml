@@ -27,10 +27,14 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: List directories and files
+        run: ls -la ~/my-project
+
+
       # Run the tests
       - name: Running unit tests
-        working-directory: tests
+        # working-directory: tests
         run: |
           pwd
-          ls
+          $(git ls-files)
           python -m unittest discover
