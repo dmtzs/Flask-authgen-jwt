@@ -36,5 +36,4 @@ jobs:
         # working-directory: tests
         run: |
           pwd
-          $(git ls-files)
           python -m unittest discover --import-mode=append tests/
