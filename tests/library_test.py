@@ -1,5 +1,10 @@
+import os
+is_github_action = os.getenv("GITHUB_ACTIONS", False)
 import sys
-sys.path.append('src')
+if not is_github_action:
+    sys.path.append("../src")
+else:
+    sys.path.append('src')
 import unittest
 from flask_authgen_jwt import Core, DecJwt, GenJwt
 
