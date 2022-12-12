@@ -29,5 +29,6 @@ jobs:
 
       # Run the tests
       - name: Running unit tests
+        working-directory: /path/to/unit-tests
         run: |
-          python -m unittest discover -s /tests
+          python -m unittest
