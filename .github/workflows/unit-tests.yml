@@ -28,7 +28,7 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: List directories and files
-        run: ls -la ~/my-project
+        run: ls -la
 
 
       # Run the tests
