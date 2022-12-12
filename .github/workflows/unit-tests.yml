@@ -31,4 +31,5 @@ jobs:
       - name: Running unit tests
         working-directory: /home/runner/work/Flask-authgen-jwt/tests
         run: |
+          pwd
           python -m unittest
