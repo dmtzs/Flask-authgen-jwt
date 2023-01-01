@@ -116,7 +116,10 @@ class GenJwt(Core):
         if not self.jwt_fields_attr:
             self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
         if self.json_body_token:
-            bauth_credentials = request.get_json()
+            if not request.is_json:
+                self.gen_abort_error("Missing JSON in request or not JSON format sent to endpoint", 400)
+            else:
+                bauth_credentials = request.get_json()
         if self.personal_credentials is not None:
             bauth_credentials[self.personal_credentials[0]] = bauth_credentials["username"]
             bauth_credentials[self.personal_credentials[1]] = bauth_credentials["password"]
