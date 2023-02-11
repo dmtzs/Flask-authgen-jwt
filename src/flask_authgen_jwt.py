@@ -250,6 +250,8 @@ class DecJwt(Core):
         :return: the decoded token or None if an error occurred
         """
         auth_header = request.headers.get("Authorization")
+        if auth_header is None:
+            self.gen_abort_error("Authorization header is missing", 400)
         auth_header = auth_header.split(" ")
         token = auth_header[1]
         del auth_header
