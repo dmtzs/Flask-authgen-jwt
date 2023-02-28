@@ -121,10 +121,8 @@ class GenJwt(Core):
             else:
                 bauth_credentials = request.get_json()
         if self.personal_credentials is not None:
-            bauth_credentials[self.personal_credentials[0]] = bauth_credentials["username"]
-            bauth_credentials[self.personal_credentials[1]] = bauth_credentials["password"]
-            del bauth_credentials["username"]
-            del bauth_credentials["password"]
+            bauth_credentials[self.personal_credentials[0]] = bauth_credentials.pop("username")
+            bauth_credentials[self.personal_credentials[1]] = bauth_credentials.pop("password")
         payload = bauth_credentials
         payload.update(self.jwt_fields_attr)
             
