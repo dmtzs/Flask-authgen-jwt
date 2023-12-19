@@ -36,3 +36,6 @@ MANIFEST
 # Flask stuff:
 instance/
 .webassets-cache
+
+# Environment variables
+*.env
