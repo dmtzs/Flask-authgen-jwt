@@ -11,11 +11,13 @@ Release and components versions supported.
 Supported versions of the releases and other components of this project that are not necessary releases. This releases are stored in this repository and can be requested via github API.
 | Version | Supported          |
 | ------- | ------------------ |
-| Flask-authgen-jwt 4.1.2   | :white_check_mark: |
+| Flask-authgen-jwt 4.2.3   | :white_check_mark: |
 
 Not supported versions of releases.
 | Version | Supported          |
 | ------- | ------------------ |
+| Flask-authgen-jwt 4.2.2   | :x: |
+| Flask-authgen-jwt 4.1.2   | :x: |
 | Flask-authgen-jwt 4.1.1   | :x: |
 | Flask-authgen-jwt 4.1.0   | :x: |
 | Flask-authgen-jwt 4.0.0   | :x: |
