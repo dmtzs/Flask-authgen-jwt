@@ -1,6 +1,5 @@
 [MESSAGES CONTROL]
 disable=
-    C0116,  # Missing function or method docstring
     W0703,  # Catching too general exception Exception
     R1705,  # Unnecessary "else" after "return"
     W0702,  # No exception type(s) specified

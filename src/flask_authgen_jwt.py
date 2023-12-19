@@ -11,6 +11,7 @@ try:
     from functools import wraps
     from base64 import b64decode
     from datetime import datetime
+    from http import HTTPStatus
     from typing import Callable, Optional, Union
     from cryptography.hazmat.primitives import serialization
     from cryptography.hazmat.backends import default_backend
@@ -91,10 +92,10 @@ class Core():
             claims = ["key", "algorithm"]
             for claim in claims:
                 if claim not in self.enc_dec_jwt_callback:
-                    self.gen_abort_error(f"The claim {claim} is not in the dictionary", 400)
+                    self.gen_abort_error(f"The claim {claim} is not in the dictionary", HTTPStatus.BAD_REQUEST.value)
         elif config == "rsa_pass":
             if "passphrase" not in self.enc_dec_jwt_callback:
-                self.gen_abort_error("The claim passphrase is not in the dictionary", 400)
+                self.gen_abort_error("The claim passphrase is not in the dictionary", HTTPStatus.BAD_REQUEST.value)
 
     def verify_user_roles(self, roles: list, user: str) -> None:
         """
@@ -209,7 +210,7 @@ class GenJwt(Core):
             self.gen_abort_error("jwt_claims decorator and function is not defined", 500)
         if self.json_body_token:
             if not request.is_json:
-                self.gen_abort_error("Missing JSON in request or not JSON format sent to endpoint", 400)
+                self.gen_abort_error("Missing JSON in request or not JSON format sent to endpoint", HTTPStatus.BAD_REQUEST.value)
             else:
                 bauth_credentials = request.get_json()
         if self.personal_credentials is not None:
@@ -232,15 +233,15 @@ class GenJwt(Core):
         """
         auth_header = request.headers.get("Authorization")
         if auth_header is None:
-            self.gen_abort_error("Authorization header is missing", 400)
+            self.gen_abort_error("Authorization header is missing", HTTPStatus.BAD_REQUEST.value)
         auth_header = auth_header.split(" ")
         if auth_header[0] != "Basic":
-            self.gen_abort_error("Authorization header must be Basic", 400)
+            self.gen_abort_error("Authorization header must be Basic", HTTPStatus.BAD_REQUEST.value)
         credentials = auth_header[1]
         credentials = b64decode(credentials).decode("utf-8")
         credentials = credentials.split(":")
         if len(credentials) != 2:
-            self.gen_abort_error("Authorization header must be Basic with user and password only", 400)
+            self.gen_abort_error("Authorization header must be Basic with user and password only", HTTPStatus.BAD_REQUEST.value)
         username = credentials[0]
         password = credentials[1]
         bauth_credentials = {
@@ -446,7 +447,7 @@ class DecJwt(Core):
         """
         auth_header = request.headers.get("Authorization")
         if auth_header is None:
-            self.gen_abort_error("Authorization header is missing", 400)
+            self.gen_abort_error("Authorization header is missing", HTTPStatus.BAD_REQUEST.value)
         auth_header = auth_header.split(" ")
         token = auth_header[1]
         del auth_header
@@ -486,7 +487,7 @@ class DecJwt(Core):
                 claims = self.get_jwt_claims_to_verify_callback
                 for claim in claims:
                     if claim not in token:
-                        self.gen_abort_error(f"The claim {claim} is not in the token", 400)
+                        self.gen_abort_error(f"The claim {claim} is not in the token", HTTPStatus.BAD_REQUEST.value)
             if len(token) < 1:
                 self.gen_abort_error("Invalid token", 401)
             if self.personal_credentials is not None:
