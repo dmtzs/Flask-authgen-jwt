@@ -30,10 +30,11 @@ jobs:
 
     - name: Set commit message and version as env variables
       run: |
+        set -e
         echo "COMMIT_MESSAGE<<EOF" >> $GITHUB_ENV
         git log --format='%B' -n 1 >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
-        echo "VERSION=$(jq -r .version config.json)" >> $GITHUB_ENV
+        echo "VERSION=$(awk -F' = ' '/^version = /{print $2}' setup.cfg)" >> $GITHUB_ENV
 
     - name: Install gh
       run: |
