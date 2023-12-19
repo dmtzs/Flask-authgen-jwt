@@ -1,3 +1,7 @@
+"""
+This script is used to validate if the version is the same of one of the previous versions.
+"""
+
 import os
 import sys
 import traceback
