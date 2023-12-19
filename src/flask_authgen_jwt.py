@@ -302,7 +302,12 @@ class DecJwt(Core):
     def __authenticate_credentials(self, token: dict[str, str]) -> bool:
         """
         Verify the credentials of the user, if the credentials are not correct then the user will be unauthorized
-        :param token: token to verify the credentials
+
+        Args:
+        - token: token to verify the credentials
+
+        Returns:
+        - bool: True if the credentials are correct, False if not
         """
         if self.credentials_success_callback is None:
             self.gen_abort_error("get_credentials_success decorator is not set", 500)
@@ -317,7 +322,12 @@ class DecJwt(Core):
     def __set_token_as_attr(self, token: dict) -> None:
         """
         Method to set the token as an attribute of the class
-        :param token: token to set as attribute
+
+        Args:
+        - token: token to set as attribute
+
+        Returns:
+        - None
         """
         if self.token_as_attr:
             self.token = token
