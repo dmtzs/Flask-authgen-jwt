@@ -3,62 +3,46 @@ name: Pylint
 on:
   push:
     branches:
-      - development
+      - '*'
+      - '!master'
 
 jobs:
-  changes:
-    name: Verify files
-    runs-on: ubuntu-latest
-    outputs:
-      api: ${{ steps.filter.outputs.api }}
-    steps:
-    - uses: actions/checkout@v3
-      name: Accessing to files
-      with:
-        fetch-depth: 2 # last 2 commits
-    
-    - name: Extracting branch name
-      run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/})"  #output: dmtzs-test-pylint1 or other branch name
-      id: extract_branch
-
-    - uses: dorny/paths-filter@v2
-      name: Verifying changes in files
-      id: filter
-      with:
-        base: ${{ steps.extract_branch.outputs.branch }}  #Uses the branch that trigger the workflow
-        filters: |
-          api:
-            - 'src/**.py'
-    
-    # run only if 'api' files were changed
-    - name: workflow tests
-      if: steps.filter.outputs.api == 'true'
-      run: echo "Files changed, running deployment job"
-
-    # run only if not 'api' files were changed
-    - name: not workflow tests
-      if: steps.filter.outputs.api != 'true'
-      run: echo "Files not changed, passing the deployment job"
-
   build:
-    needs: changes
     name: Executing pylint
     runs-on: ubuntu-latest
-    
-    if: needs.changes.outputs.api == 'true'
+    env:
+      CHANGED: 0
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2 # last 2 commits
+
+    - name: Extracting branch name
+      run: echo "Current branch is ${GITHUB_REF##*/}"
+      id: extract_branch
+
+    - name: Check for Python file changes
+      id: check_files
+      run: |
+        CHANGED=$(git diff --name-only HEAD^ HEAD | grep '\.py$' | wc -l)
+        echo "CHANGED=$CHANGED" >> $GITHUB_ENV
+    
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
+      if: env.CHANGED != '0'
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    
     - name: Install dependencies
+      if: env.CHANGED != '0'
       run: |
         python -m pip install --upgrade pip
-        pip install pylint
+        pip install pylint requests==2.31.0 python-dotenv==1.0.0
+
     - name: Analysing the code with pylint
+      if: env.CHANGED != '0'
       run: |
-        pylint $(git ls-files './src*.py') --rcfile=.github/config/.pylintrc ./
+        pylint $(git ls-files './src/*.py' './.github/*.py') --rcfile=.github/config/.pylintrc ./

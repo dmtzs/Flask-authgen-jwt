@@ -1,0 +1,58 @@
+name: Release Workflow
+
+on:
+    pull_request:
+      types: [closed]
+
+jobs:
+  release:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'master'
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
+      VERSION: ""
+      COMMIT_MESSAGE: ""
+      RELEASE_ID: ""
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    # - name: Upload release artifact
+    #   uses: actions/upload-artifact@v3
+    #   with:
+    #     name: cert.pem
+    #     path: /home/runner/work/CameraRaspPython/CameraRaspPython/X509-cert-3470865803141646530.pem
+
+    - name: Set commit message and version as env variables
+      run: |
+        echo "COMMIT_MESSAGE<<EOF" >> $GITHUB_ENV
+        git log --format='%B' -n 1 >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+        echo "VERSION=$(jq -r .version config.json)" >> $GITHUB_ENV
+
+    - name: Install gh
+      run: |
+        type -p curl >/dev/null || (sudo apt update && sudo apt install curl -y)
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh -y
+
+    - name: Create release
+      run: |
+          gh release create v${{ env.VERSION }} \
+            --title "Release v${{ env.VERSION }}" \
+            --notes "${{ env.COMMIT_MESSAGE }}" \
+            --repo ${{ github.repository }} \
+            --target ${{ github.sha }}
+          RELEASE_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/releases/tags/v${{ env.VERSION }} | jq '.id')
+          echo "RELEASE_ID=$RELEASE_ID" >> $GITHUB_ENV
