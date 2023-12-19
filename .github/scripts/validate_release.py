@@ -46,8 +46,11 @@ def load_env_vars() -> None:
     - None
     """
     try:
-        load_dotenv("vars.env")
-        print("\033[92m The vars.env file loaded \033[0m")
+        if os.path.exists("vars.env"):
+            load_dotenv("vars.env")
+            print("\033[92m The vars.env file loaded \033[0m")
+        else:
+            raise FileNotFoundError
     except FileNotFoundError:
         print("\033[33m The vars.env file was not found, using env vars of github action \033[0m")
 
