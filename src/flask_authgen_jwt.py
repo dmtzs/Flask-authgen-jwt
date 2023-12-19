@@ -41,11 +41,12 @@ class Core():
         :param func: function to be decorated
         :return: the tuple with the username and password with personal names
 
-        :Example:
+        ### Example
+        ```python
         @dec_jwt.personal_credentials_field
-        
         def get_personal_credentials():
             return "my_username_personal_name_field", "my_password_personal_name_field"
+        ```
         """
         self.personal_credentials = func()
         return func
@@ -322,9 +323,35 @@ class DecJwt(Core):
             self.token = token
 
     def get_jwt_claims_to_verify(self, func: Callable[[None], list[str]]) -> None:
-        """Decorator to get the claims to verify in the token
-        :param func: function to be decorated, should return a list of the claims to verify
-        :return: the function to wrap that returns the a boolean field"""
+        """
+        Decorator to get the claims to verify in the token
+
+        Args:
+        - func: function to be decorated, should return a list of the claims to verify
+
+        Returns:
+        - Callable: the function to wrap that returns the a boolean field
+
+        ### Registered claims
+        The JWT specification defines seven reserved claims that are not required, but are recommended to allow interoperability with third-party applications. These are:
+
+        - iss (issuer): Issuer of the JWT
+        - sub (subject): Subject of the JWT (the user)
+        - aud (audience): Recipient for which the JWT is intended
+        - exp (expiration time): Time after which the JWT expires
+        - nbf (not before time): Time before which the JWT must not be accepted for processing
+        - iat (issued at time): Time at which the JWT was issued; can be used to determine age of the JWT
+        - jti (JWT ID): Unique identifier; can be used to prevent the JWT from being replayed (allows a token to be used only once)
+
+        More about claims [here](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-token-claims)
+
+        ### Example
+        ```python
+        @dec_jwt.get_jwt_claims_to_verify
+        def get_jwt_claims():
+            return ["iat", "sub"]
+        ```
+        """
         self.get_jwt_claims_to_verify_callback = func()
 
     def verify_jwt_credentials(self, func: Callable[[str, str], bool]) -> Callable[[str, str], bool]:
