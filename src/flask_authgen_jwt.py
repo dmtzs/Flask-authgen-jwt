@@ -2,7 +2,7 @@
 flask_authgen_jwt
 ==================
 This module provides creation of new jwt also using basic auth to get the jwt and decode of the jwt.
-:copyright: (C) 2022 by Diego Martinez Sanchez and Guillermo Ortega Romo.
+:copyright: (C) 2022 by Diego Martinez Sanchez.
 :license:   MIT, see LICENSE for more details.
 """
 
