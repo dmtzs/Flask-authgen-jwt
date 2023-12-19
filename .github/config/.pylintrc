@@ -1,24 +1,18 @@
 [MESSAGES CONTROL]
 disable=
-    C0303,
-    C0304,
-    C0116,
-    W0703,
-    R1705,
-    C0114,
-    W0702,
-    R0912,
-    R0915,
-    W0511,
-    C0413,
-    F0010,
-    R0401,
-    R1720,
-    R1710,
-    C0115,
-    W0611,
-    E1133,
-    E1135,
+    C0116,  # Missing function or method docstring
+    W0703,  # Catching too general exception Exception
+    R1705,  # Unnecessary "else" after "return"
+    W0702,  # No exception type(s) specified
+    R0912,  # Too many branches
+    R0915,  # Too many statements
+    C0413,  # Import "from module import *" should be placed at the top of the module
+    F0010,  # error while code parsing: Unable to load file
+    R0401,  # Cyclic import
+    R1720,  # Unnecessary "elif" after "return"
+    R1710,  # Either all return statements in a function should return an expression, or none of them should.
+    E1133,  # Non-iterable value passed to an iterator's __next__ method
+    E1135,  # Non-iterator passed to iter
 
 [FORMAT]
 max-line-length=210
