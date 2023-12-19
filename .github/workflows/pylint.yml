@@ -45,4 +45,4 @@ jobs:
     - name: Analysing the code with pylint
       if: env.CHANGED != '0'
       run: |
-        pylint $(git ls-files './*.py') --rcfile=.github/config/.pylintrc ./
+        pylint $(git ls-files './src/*.py' './.github/*.py') --rcfile=.github/config/.pylintrc ./
