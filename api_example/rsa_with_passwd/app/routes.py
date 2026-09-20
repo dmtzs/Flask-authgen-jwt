@@ -1,101 +1,59 @@
 try:
     import datetime as dt
-    from typing import Union
     from app import app, auth, gen_auth
     from flask import Response, make_response, jsonify
 except ImportError as eImp:
     print(f"The following import ERROR occurred in {__file__}: {eImp}")
 
-@gen_auth.enc_dec_jwt_config
-def encode_private_key() -> dict[str, Union[str, bytes]]:
-    file_private = "./private-key.pem"
-    private_key = open(file_private).read().encode("ascii")
+# Read the keys once at import instead of on every request.
+with open("./private-key.pem", "rb") as _priv:
+    _PRIVATE_KEY = _priv.read()
+with open("./public-key.pem", "rb") as _pub:
+    _PUBLIC_KEY = _pub.read()
 
-    encode_attributes = {
-        "key": private_key,# In this case key should be your private key
-        "algorithm": "RS256",
-        "passphrase": b"your password"
-    }
-    return encode_attributes
+
+@gen_auth.enc_dec_jwt_config
+def signing_config() -> dict:
+    # gen_auth was created with rsa_encrypt=True, so the private key is decrypted
+    # with this passphrase before signing.
+    return {"key": _PRIVATE_KEY, "algorithm": "RS256", "passphrase": b"your password"}
+
 
 @auth.enc_dec_jwt_config
-def decode_pub_key() -> dict[str, Union[str, bytes]]:
-    file_public = "./public-key.pem"
-    public_key = open(file_public).read().encode("ascii")
+def verification_config() -> dict:
+    return {"key": _PUBLIC_KEY, "algorithm": "RS256"}
 
-    decode_attributes = {
-        "key": public_key,# In this case key should be your public key
-        "algorithm": "RS256"
-    }
-    return decode_attributes
-
-@gen_auth.personal_credentials_field
-@auth.personal_credentials_field
-def personal_credentials_field() -> tuple[str, str]:
-    return "per_username", "per_password"
 
 @gen_auth.verify_bauth_credentials
-def get_basic_auth_credentials2(username: str, password: str) -> dict:
-    # Use the username and password to authenticate the user in the way you want-
-    # and return true if the user is authenticated
-    if username == "admin2" and password == "passwd2":
-        return True
-    else:
-        return False
+def check_credentials(username: str, password: str) -> bool:
+    return username == "admin2" and password == "passwd2"
+
 
 @auth.get_user_roles
 @gen_auth.get_user_roles
-def my_roles(username: str) -> list[str]:
-    # Use username to get roles from database
-    print(f"username in roles: {username}")
+def user_roles(subject: str) -> list:
     return ["admin", "user"]
 
-@auth.get_jwt_claims_to_verify
-def get_jwt_claims_to_verify() -> list[str]:
-    # return ["exp", "iat", "nbf"]
-    return ["exp", "iat"]
-
-@gen_auth.jwt_claims
-def jwt_claims() -> dict:
-    claims = {
-        "exp": dt.datetime.now(tz=dt.timezone.utc) + dt.timedelta(seconds=30),
-        "iat": dt.datetime.now(tz=dt.timezone.utc)
-    }
-    return claims
 
 @auth.verify_jwt_credentials
-def creds(username_jwt: str, password_jwt: str) -> bool:
-    my_dict = {
-        "username_jwt": username_jwt,
-        "password_jwt": password_jwt
-    }
-    return True
-    # return False
+def user_is_valid(subject: str) -> bool:
+    return subject == "admin2"
 
-# -------------Endpoints-------------
-@app.route("/")
-@auth.login_required(roles=["admin", "eder"])
-def index() -> Response:
-    return make_response("Todo bien", 200)
 
+@gen_auth.jwt_claims
+def extra_claims() -> dict:
+    now = dt.datetime.now(tz=dt.timezone.utc)
+    return {"exp": now + dt.timedelta(minutes=15), "iat": now}
+
+
+# ------------- Endpoints -------------
 @app.route("/generate_token", methods=["POST"])
-@gen_auth.generate_jwt(roles=["eder", "user"])
-def gen_token(token) -> Response:
-    response = {
-        "status": "success",
-        "token": token
-    }
-    if token is None:
-        response["status"] = "error"
-        response["message_error"] = "Token was not generated correctly, please verify"
-        return make_response(jsonify(response), 500)
-    return make_response(jsonify(response)), 200
+@gen_auth.generate_jwt(roles=["user"])
+def gen_token(access_token: str) -> Response:
+    return make_response(jsonify(access_token=access_token), 200)
 
-@app.route("/temp")
-def temp() -> Response:
-    test = (("val1", "hola"), ("val2", "prueba2"))
-    response = {
-        "message": "solo prueba",
-        "test_data": test
-    }
-    return make_response(jsonify(response))
+
+@app.route("/")
+@auth.login_required(roles=["admin", "user"])
+def index() -> Response:
+    return make_response(jsonify(message="authorized"), 200)

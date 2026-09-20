@@ -1,62 +1,102 @@
 import os
-is_github_action = os.getenv("GITHUB_ACTIONS", False)
 import sys
-if not is_github_action:
-    sys.path.append("../src")
-else:
-    sys.path.append('src')
+import base64
 import unittest
-from flask_authgen_jwt import Core, DecJwt, GenJwt
 
-# Create a Flask-Authgen-JWT Core, DecJwt and GenJwt instance
-# Crea una instancia de Flask-Authgen-JWT Core, DecJwt y GenJwt
-core = Core()
-auth = DecJwt()
-auth_gen = GenJwt()
+is_github_action = os.getenv("GITHUB_ACTIONS", False)
+sys.path.append("src" if is_github_action else "../src")
 
-# Define a function that returns the user roles
-# Define una función que retorna los roles del usuario
-@core.get_user_roles
-def get_user_roles(username: str) -> list[str]:
-    return ["admin", "user", "guest", username]
+import jwt as pyjwt
+from flask import Flask, jsonify, make_response
+from flask_authgen_jwt import DecJwt, GenJwt, get_current_subject
 
-@auth.verify_jwt_credentials
-def verify_jwt_credentials(username_jwt: str, password_jwt: str) -> bool:
-    if username_jwt == 'test' and password_jwt == 'test':
-        return True
-    return False
+SECRET = "unit-test-secret-key-at-least-32-bytes-long"
+
+
+def _basic(username: str, password: str) -> str:
+    return "Basic " + base64.b64encode(f"{username}:{password}".encode()).decode()
+
+
+def build_app() -> Flask:
+    app = Flask(__name__)
+    gen = GenJwt(access_ttl_seconds=60)
+    dec = DecJwt()
+
+    @gen.enc_dec_jwt_config
+    @dec.enc_dec_jwt_config
+    def cfg() -> dict:
+        return {"key": SECRET, "algorithm": "HS256", "leeway": 5}
+
+    @gen.verify_bauth_credentials
+    def check(username: str, password: str) -> bool:
+        return username == "test" and password == "test"
+
+    @gen.get_user_roles
+    @dec.get_user_roles
+    def roles(subject: str) -> list:
+        return ["user"]
+
+    @dec.verify_jwt_credentials
+    def user_valid(subject: str) -> bool:
+        return subject == "test"
+
+    @app.post("/token")
+    @gen.generate_jwt(roles=["user"], with_refresh=True)
+    def token(access: str, refresh: str):
+        return make_response(jsonify(access_token=access, refresh_token=refresh), 200)
+
+    @app.post("/refresh")
+    @dec.refresh_jwt
+    def refresh(subject: str):
+        return make_response(jsonify(access_token=gen.create_access_token(subject)), 200)
+
+    @app.get("/protected")
+    @dec.login_required(roles=["user"])
+    def protected():
+        return make_response(jsonify(subject=get_current_subject()), 200)
+
+    return app
+
 
 class TestFlaskAuthgenJwt(unittest.TestCase):
-    def test_roles_by_username(self):
-        # Generate a list of roles by username
-        # Generar una lista de roles por nombre de usuario
-        my_usr = "my_username"
-        list_response = get_user_roles(my_usr)
+    def setUp(self) -> None:
+        self.client = build_app().test_client()
 
-        # Assert that the response is a list
-        # Comprobar que la respuesta es una lista
-        self.assertTrue(isinstance(list_response, list))
+    def test_token_never_contains_password(self):
+        res = self.client.post("/token", headers={"Authorization": _basic("test", "test")})
+        self.assertEqual(res.status_code, 200)
+        access = res.get_json()["access_token"]
+        payload = pyjwt.decode(access, SECRET, algorithms=["HS256"])
+        self.assertNotIn("password", payload)
+        self.assertEqual(payload["sub"], "test")
+        self.assertEqual(payload["type"], "access")
+        self.assertIn("jti", payload)
 
-        # Assert that the list response all items are strings
-        # Comprobar que todos los elementos de la lista son cadenas de texto
-        self.assertTrue(all(isinstance(item, str) for item in list_response))
+    def test_bad_credentials_are_rejected(self):
+        res = self.client.post("/token", headers={"Authorization": _basic("test", "wrong")})
+        self.assertEqual(res.status_code, 401)
 
-        # Assert that the list response all items are strings and that are four in the list
-        # Comprobar que todos los elementos de la lista son cadenas de texto y que hay cuatro en la lista
-        self.assertEqual(list(map(type, list_response)).count(str), 4)
+    def test_protected_requires_a_token(self):
+        self.assertEqual(self.client.get("/protected").status_code, 401)
 
-    def test_jwt_credentials_auth(self):
-        # Calling the authentication function with valid username and password
-        # and check that returns True
-        # Llamar a la función de autenticación con un nombre de usuario y
-        # contraseña válidos y comprobar que devuelve True
-        self.assertTrue(verify_jwt_credentials('test', 'test'))
+    def test_full_access_and_refresh_flow(self):
+        res = self.client.post("/token", headers={"Authorization": _basic("test", "test")})
+        access = res.get_json()["access_token"]
+        refresh = res.get_json()["refresh_token"]
 
-        # Calling the authentication function with invalid username and password
-        # and check that returns False
-        # Llamar a la función de autenticación con un nombre de usuario y
-        # contraseña inválidos y comprobar que devuelve False
-        self.assertFalse(verify_jwt_credentials('wrong', 'wrong'))
+        ok = self.client.get("/protected", headers={"Authorization": f"Bearer {access}"})
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual(ok.get_json()["subject"], "test")
 
-if __name__ == '__main__':
+        # A refresh token must not grant access to protected resources.
+        denied = self.client.get("/protected", headers={"Authorization": f"Bearer {refresh}"})
+        self.assertEqual(denied.status_code, 401)
+
+        # The refresh endpoint issues a new access token.
+        renewed = self.client.post("/refresh", headers={"Authorization": f"Bearer {refresh}"})
+        self.assertEqual(renewed.status_code, 200)
+        self.assertIn("access_token", renewed.get_json())
+
+
+if __name__ == "__main__":
     unittest.main()
