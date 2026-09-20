@@ -5,7 +5,7 @@ This script is used to validate if the version is the same of one of the previou
 import os
 import sys
 import traceback
-import configparser
+import tomllib
 from http import HTTPStatus
 import requests
 from dotenv import load_dotenv
@@ -32,9 +32,9 @@ def main() -> None:
     if response.status_code == HTTPStatus.OK.value:
         previous_versions = [release.get("tag_name")[1:] for release in response_body]  # example: ['1.0.0']
         root = os.getenv("GITHUB_WORKSPACE")
-        config = configparser.ConfigParser()
-        config.read(f"{root}/setup.cfg")
-        actual_version = config.get("metadata", "version")
+        with open(f"{root}/pyproject.toml", "rb") as pyproject_file:
+            pyproject = tomllib.load(pyproject_file)
+        actual_version = pyproject["project"]["version"]
         if actual_version in previous_versions:
             print("\033[33m The version is the same of one of the previous versions, please update the version \033[0m")
             sys.exit(1)
