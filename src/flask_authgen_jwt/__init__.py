@@ -97,6 +97,7 @@ class Core:
 
     @property
     def logger(self) -> logging.Logger:
+        """Return the Flask app logger, or a fallback logger outside app context."""
         try:
             return current_app.logger
         except RuntimeError:

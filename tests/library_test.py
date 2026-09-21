@@ -1,9 +1,10 @@
+"""Unit tests for the flask_authgen_jwt library."""
 import os
 import sys
 import base64
 import unittest
 
-is_github_action = os.getenv("GITHUB_ACTIONS", False)
+is_github_action = os.getenv("GITHUB_ACTIONS") == "true"
 sys.path.append("src" if is_github_action else "../src")
 
 import jwt as pyjwt
@@ -18,6 +19,7 @@ def _basic(username: str, password: str) -> str:
 
 
 def build_app() -> Flask:
+    """Build a minimal Flask app wired with GenJwt/DecJwt for the tests."""
     app = Flask(__name__)
     gen = GenJwt(access_ttl_seconds=60)
     dec = DecJwt()
@@ -33,7 +35,7 @@ def build_app() -> Flask:
 
     @gen.get_user_roles
     @dec.get_user_roles
-    def roles(subject: str) -> list:
+    def roles(_subject: str) -> list:
         return ["user"]
 
     @dec.verify_jwt_credentials
@@ -59,10 +61,14 @@ def build_app() -> Flask:
 
 
 class TestFlaskAuthgenJwt(unittest.TestCase):
+    """End-to-end tests for token generation, refresh and protected routes."""
+
     def setUp(self) -> None:
+        """Create a fresh Flask test client for every test."""
         self.client = build_app().test_client()
 
     def test_token_never_contains_password(self):
+        """The signed access token must never carry the plaintext password."""
         res = self.client.post("/token", headers={"Authorization": _basic("test", "test")})
         self.assertEqual(res.status_code, 200)
         access = res.get_json()["access_token"]
@@ -73,13 +79,16 @@ class TestFlaskAuthgenJwt(unittest.TestCase):
         self.assertIn("jti", payload)
 
     def test_bad_credentials_are_rejected(self):
+        """Wrong basic-auth credentials must be rejected with 401."""
         res = self.client.post("/token", headers={"Authorization": _basic("test", "wrong")})
         self.assertEqual(res.status_code, 401)
 
     def test_protected_requires_a_token(self):
+        """A protected route without a bearer token must return 401."""
         self.assertEqual(self.client.get("/protected").status_code, 401)
 
     def test_full_access_and_refresh_flow(self):
+        """An issued access token must be usable on a protected route."""
         res = self.client.post("/token", headers={"Authorization": _basic("test", "test")})
         access = res.get_json()["access_token"]
         refresh = res.get_json()["refresh_token"]

@@ -1,3 +1,4 @@
+"""Flask application factory for the without-RSA example."""
 try:
     from flask import Flask
     import flask_authgen_jwt
@@ -8,4 +9,4 @@ app = Flask(__name__)
 gen_auth = flask_authgen_jwt.GenJwt()
 auth = flask_authgen_jwt.DecJwt()
 
-from app import routes
+from app import routes  # pylint: disable=import-error
