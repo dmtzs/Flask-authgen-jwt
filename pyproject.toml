@@ -1,6 +1,42 @@
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
-]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "Flask-authgen-jwt"
+version = "5.0.0"
+description = "JWT authentication and generator for Flask routes"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Diego Martinez", email = "gd-code@outlook.com" }]
+keywords = ["flask", "jwt", "authentication", "auth", "token"]
+dependencies = [
+    "Flask>=3,<4",
+    "PyJWT[crypto]>=2.9,<3",
+    "cryptography>=43",
+]
+classifiers = [
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries",
+]
+
+[project.urls]
+Homepage = "https://github.com/dmtzs/Flask-authgen-jwt"
+"Bug Tracker" = "https://github.com/dmtzs/Flask-authgen-jwt/issues"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+flask_authgen_jwt = ["py.typed"]

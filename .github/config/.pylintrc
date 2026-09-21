@@ -12,6 +12,7 @@ disable=
     R1710,  # Either all return statements in a function should return an expression, or none of them should.
     E1133,  # Non-iterable value passed to an iterator's __next__ method
     E1135,  # Non-iterator passed to iter
+    R0801,  # Similar lines in N files - api_example scripts intentionally duplicate boilerplate
 
 [FORMAT]
 max-line-length=210
