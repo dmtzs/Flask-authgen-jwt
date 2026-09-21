@@ -5,7 +5,7 @@ This script is used to validate if the version is the same of one of the previou
 import os
 import sys
 import traceback
-import tomllib
+import tomllib  # pylint: disable=import-error  # stdlib since 3.11; this script runs on 3.11 in CI
 from http import HTTPStatus
 import requests
 from dotenv import load_dotenv
